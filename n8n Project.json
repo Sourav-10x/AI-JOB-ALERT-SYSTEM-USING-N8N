@@ -1,0 +1,165 @@
+{
+  "name": "n8n Project",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */5 * * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -480,
+        -144
+      ],
+      "id": "62aee0fc-69d6-463c-bcf7-c8a4452027b7",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://remoteok.io/remote-dev-jobs.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        -144
+      ],
+      "id": "427be1fb-c36e-4a48-a42c-575b50bc2424",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Here are the latest job listings:\n\n{{$json[\"content\"]}}\n\nPlease summarize them clearly in \nbullet points or categorize by \nrole or location if possible.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -16,
+        -144
+      ],
+      "id": "d87f2d89-017a-43e4-8ece-4f00160f3203",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "pY6i3KPfsEwZMtSh",
+          "name": "OpenAi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "sourav28567@gmail.com",
+        "subject": "Your AI-Filtered Job Alerts",
+        "message": "=<html>\n  <body>\n    <p>Hey! Here are your latest job alerts:</p>\n    <pre style=\"font-family: Arial, sans-serif; white-space: pre-wrap;\">{{ $json.message.content }}</pre>\n  </body>\n</html>\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        368,
+        -144
+      ],
+      "id": "f9e78c59-654c-4cf6-9c63-293c86fda791",
+      "name": "Send a message",
+      "webhookId": "a3d2e8cc-b46a-4d08-98a8-c98976cc97cb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Q84ZLnYN0c8LqipA",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobs = $input.all();\n\nconst combined = jobs.map((job, index) => {\n  const data = job.json;\n  return `🔹 Job ${index + 1}\nTitle: ${data.title}\nCompany: ${data.company || 'N/A'}\nLocation: ${data.location || 'N/A'}\nLink: ${data.link || data.url || 'N/A'}`;\n}).join('\\n\\n');\n\nreturn [\n  {\n    json: {\n      content: combined,\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -144
+      ],
+      "id": "2e2feb80-a911-433b-8e0f-f69eb239417e",
+      "name": "Code"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "93b754b7-229b-4cef-bb92-a0f9e2b20bcb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "04e3d4314276c8204ec2aabec2c33b6f371e91e1ff9e231fae293b4ac319e3d0"
+  },
+  "id": "qhSGeAvvNjzUZ33N",
+  "tags": []
+}
